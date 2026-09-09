@@ -2,7 +2,6 @@
 
 Hobby operating system in Rust, built from scratch (`#![no_std]`) for `x86_64`.
 Goal: boot in QEMU with its own GUI (terminal, file explorer, minimal browser).
-See `docs/ROADMAP.md` for the full plan and `docs/ARCHITECTURE.md` for design.
 
 Status: Phase 1 — kernel boots in QEMU (BIOS) and prints "Hello, Kaos!" on
 the framebuffer plus serial logs.
