@@ -31,7 +31,6 @@ kernel/src/framebuffer.rs  # framebuffer text writer (unit tested on host)
 src/main.rs          # host launcher: boots images in QEMU
 build.rs             # assembles BIOS/UEFI disk images from the kernel ELF
 scripts/             # build.ps1, run.ps1 (Windows PowerShell)
-docs/                # AGENTS.md, ROADMAP.md, ARCHITECTURE.md, LOG.md, skill
 ```
 
 ## Rules for contributors (agents included)
