@@ -4,7 +4,8 @@ Hobby operating system in Rust, built from scratch (`#![no_std]`) for `x86_64`.
 Goal: boot in QEMU with its own GUI (terminal, file explorer, minimal browser).
 See `docs/ROADMAP.md` for the full plan and `docs/ARCHITECTURE.md` for design.
 
-Status: Phase 0 — environment ready. No bootable kernel yet (that is Phase 1).
+Status: Phase 1 — kernel boots in QEMU (BIOS) and prints "Hello, Kaos!" on
+the framebuffer plus serial logs.
 
 ## Prerequisites
 
@@ -16,17 +17,22 @@ Status: Phase 0 — environment ready. No bootable kernel yet (that is Phase 1).
 ## Quickstart
 
 ```powershell
-./scripts/build.ps1            # fmt check + cargo check + build + clippy
-./scripts/run.ps1              # verify QEMU is available
-./scripts/run.ps1 -Iso .\some-third-party.iso  # prove emulation works
+./scripts/build.ps1            # fmt + build images + tests + clippy
+./scripts/run.ps1              # boot the BIOS image in QEMU
+./scripts/run.ps1 -- -display none  # headless boot (serial logs only)
+./scripts/run.ps1 -Iso .\some-third-party.iso  # third-party ISO smoke test
 ```
 
 ## Layout
 
 ```
-src/main.rs      # freestanding stub (wiring only; real init order in Phase 1+)
-scripts/         # build.ps1, run.ps1 (Windows PowerShell)
-docs/            # AGENTS.md, ROADMAP.md, ARCHITECTURE.md, LOG.md, skill
+kernel/src/main.rs   # entry point: serial + framebuffer init, then halt
+kernel/src/serial.rs # COM1 logging (uart_16550)
+kernel/src/framebuffer.rs  # framebuffer text writer (unit tested on host)
+src/main.rs          # host launcher: boots images in QEMU
+build.rs             # assembles BIOS/UEFI disk images from the kernel ELF
+scripts/             # build.ps1, run.ps1 (Windows PowerShell)
+docs/                # AGENTS.md, ROADMAP.md, ARCHITECTURE.md, LOG.md, skill
 ```
 
 ## Rules for contributors (agents included)

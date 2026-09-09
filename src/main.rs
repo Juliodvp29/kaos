@@ -1,26 +1,66 @@
-//! Kaos kernel entry stub (Phase 0).
+//! Kaos image launcher (host tool).
 //!
-//! This module only proves that the freestanding (`no_std`) toolchain setup
-//! works. It does not boot yet: the real bootloader integration and the boot
+//! Boots the BIOS disk image assembled by `build.rs` in QEMU.
+//! Usage: `cargo run -- bios [-- extra QEMU args...]`.
 
-#![no_std]
-#![no_main]
+use std::env;
+use std::path::PathBuf;
+use std::process::{self, Command};
 
-/// Phase 0 placeholder entry point.
-///
-/// It intentionally does nothing but halt the CPU. Phase 1 replaces it with
-/// the `bootloader_api` entry point.
-#[unsafe(no_mangle)]
-pub extern "C" fn main() -> ! {
-    loop {
-        core::hint::spin_loop();
+/// Fallback when QEMU is installed but missing from `PATH`.
+const QEMU_FALLBACK: &str = r"C:\Program Files\qemu\qemu-system-x86_64.exe";
+
+/// Resolves the QEMU binary: `PATH` first, well-known install dir as fallback.
+fn qemu_binary() -> PathBuf {
+    if Command::new("qemu-system-x86_64")
+        .arg("--version")
+        .output()
+        .is_ok()
+    {
+        PathBuf::from("qemu-system-x86_64")
+    } else {
+        PathBuf::from(QEMU_FALLBACK)
     }
 }
 
-/// Kernel panic handler (Phase 0: halt on panic).
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
+fn main() {
+    let mut args = env::args().skip(1);
+    let mode = args.next().unwrap_or_else(|| "bios".to_string());
+    let extra: Vec<String> = args.collect();
+
+    let image = match mode.as_str() {
+        "bios" => PathBuf::from(env!("KAOS_BIOS_IMAGE")),
+        "uefi" => {
+            eprintln!(
+                "UEFI boot is deferred: the UEFI bootloader binary does not link on Windows hosts."
+            );
+            process::exit(2);
+        }
+        other => {
+            eprintln!("Unknown mode {:?}: expected `bios` or `uefi`.", other);
+            process::exit(2);
+        }
+    };
+
+    if !image.exists() {
+        eprintln!("Disk image not found at {}.", image.display());
+        process::exit(1);
     }
+
+    let mut command = Command::new(qemu_binary());
+    command
+        .arg("-drive")
+        .arg(format!("format=raw,file={}", image.display()))
+        .arg("-serial")
+        .arg("stdio")
+        .arg("-m")
+        .arg("512M")
+        .arg("-no-reboot")
+        .args(&extra);
+
+    let status = command.status().unwrap_or_else(|err| {
+        eprintln!("Failed to launch QEMU: {}.", err);
+        process::exit(1);
+    });
+    process::exit(status.code().unwrap_or(1));
 }

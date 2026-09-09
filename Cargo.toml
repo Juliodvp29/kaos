@@ -1,11 +1,26 @@
+[workspace]
+members = ["kernel"]
+resolver = "2"
+
 [package]
 name = "kaos"
 version = "0.1.0"
 edition = "2024"
 
+# Host-side image builder: assembles the bootable disk images from the
+# kernel artifact (built for x86_64-unknown-none). Only the `bios` feature
+# is enabled: the UEFI bootloader binary does not link on Windows hosts
+# (`rust-lld: undefined symbol: wcslen` in bootloader 0.11.17), so UEFI
+# image creation is deferred (see docs/LOG.md).
+[build-dependencies]
+bootloader = { version = "0.11", default-features = false, features = ["bios"] }
+kernel = { path = "kernel", artifact = "bin", target = "x86_64-unknown-none" }
+
 [dependencies]
 
-# Freestanding binary: no unwinding runtime is available without std.
+# Freestanding binaries: no unwinding runtime is available without std.
+# (The `test` profile always unwinds; the `panic` setting is ignored there,
+# which is exactly what the host unit tests need.)
 [profile.dev]
 panic = "abort"
 

@@ -1,0 +1,4 @@
+# Nightly-only cargo features used by this workspace.
+# `bindeps` enables artifact dependencies (the kernel ELF consumed by build.rs).
+[unstable]
+bindeps = true
