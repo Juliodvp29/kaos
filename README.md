@@ -32,8 +32,3 @@ src/main.rs          # host launcher: boots images in QEMU
 build.rs             # assembles BIOS/UEFI disk images from the kernel ELF
 scripts/             # build.ps1, run.ps1 (Windows PowerShell)
 ```
-
-## Rules for contributors (agents included)
-
-Read `docs/AGENTS.md` first: plan before coding, English in code/comments,
-no merged code without tests, no unreviewed `unsafe`, approved stack only.
